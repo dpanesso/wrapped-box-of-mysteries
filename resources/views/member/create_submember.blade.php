@@ -10,7 +10,7 @@
 @section('content')
 <h1>Add Another Person's Wishlist</h1>
 <p class="lead">
-    This page is ment to add members to the group who can not create an account. This includes children and people who do not own a computer.
+    This page is meant to add members to the group who can not create an account. This includes children and people who do not own a computer.
 </p>
 
 {{ Form::open(['route' => ['member.store_submember', $member->id]]) }}
