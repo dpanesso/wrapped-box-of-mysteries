@@ -200,6 +200,11 @@ class GroupController extends Controller
      */
     public function sendinvite(Request $request, Group $group)
     {
+        $member = Member::where('user_id', Auth::id())
+            ->where('group_id', $group->id)
+            ->orderBy('created_at')
+            ->first();
+
         $emails = [];
         $bad_emails = [];
 
@@ -227,7 +232,7 @@ class GroupController extends Controller
         foreach ($emails as $email) {
             // invite people through mailgun
             Notification::route('mail', $email)
-                ->notify(new GroupInvite('Bennett', $group->invite_code));
+                ->notify(new GroupInvite($member->name, $group->invite_code));
         }
 
         return redirect()->back()->with('status', 'Members invited!');
