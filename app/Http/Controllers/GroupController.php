@@ -54,6 +54,30 @@ class GroupController extends Controller
             'nickname' => 'required|string|max:255',
         ]);
 
+        $emails = [];
+        $bad_emails = [];
+
+        $to_clean = preg_split('/(\r\n|,)/', $request->emails);
+        foreach ($to_clean as $tc) {
+            $tc = strtolower(trim($tc));
+
+            if (empty($tc)) {
+                continue;
+            }
+
+            // check if email appears valid
+            if (!filter_var($tc, FILTER_VALIDATE_EMAIL)) {
+                $bad_emails[] = $tc;
+                continue;
+            }
+
+            $emails[] = $tc;
+        }
+
+        if (!empty($bad_emails)) {
+            return redirect()->back()->withErrors(['bad_emails' => count($bad_emails) . ' email(s) were invalid in your list. ' . implode(',', $bad_emails)])->withInput();
+        }
+
         $group = Group::create([
             'name' => $request->name,
             'description' => $request->description,
@@ -67,6 +91,12 @@ class GroupController extends Controller
         $member->user_id = $request->user()->id;
         $member->type = 1;
         $member->save();
+
+        foreach ($emails as $email) {
+            // invite people through mailgun
+            Notification::route('mail', $email)
+                ->notify(new GroupInvite($member->name, $group->invite_code));
+        }
 
         return redirect()->route('group.show', $group->id)->with('status', 'Group created!');
     }
